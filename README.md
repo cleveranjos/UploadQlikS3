@@ -13,4 +13,5 @@ You **must** install
 
 ## Useful reading
 * https://4sysops.com/archives/manage-amazon-aws-s3-with-powershell/
+* http://todhilton.com/technicalwriting/upload-backup-your-files-to-amazon-s3-with-powershell/
 
