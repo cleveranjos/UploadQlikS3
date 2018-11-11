@@ -10,3 +10,7 @@ Regards
 You **must** install
 * https://github.com/ahaydon/Qlik-Cli
 * https://docs.aws.amazon.com/powershell/latest/userguide/pstools-getting-set-up.html
+
+## Useful reading
+* https://4sysops.com/archives/manage-amazon-aws-s3-with-powershell/
+
