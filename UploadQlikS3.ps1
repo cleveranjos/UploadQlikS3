@@ -30,11 +30,13 @@ foreach ($app in $apps) {
             Export-QlikApp -id $app.id 
             
             Write-Verbose "Tagging to enable management" 
+            $owner = $a.owner.userDirectory + "\" + $a.owner.userId
             $tags = @(`
-                @{key = "Name"; value = $app.name}, `
-                @{key = "Stream"; value = $app.stream.name}, `
-                @{key = "Owner"; value = $app.owner}, `
-                @{key = "Description"; value = $app.description} )
+                @{key = "name"; value = $app.name}, `
+                @{key = "modifiedDate"; value = $app.modifiedDate}, `
+                @{key = "stream"; value = $app.stream.name}, `
+                @{key = "userDirectory"; value = $a.owner.userDirectory}, ` 
+                @{key = "userId"; value = $a.owner.userId })
 
             Write-Verbose "Uploadind as $($app.id).qvf"    
             Write-S3Object `
