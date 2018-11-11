@@ -24,12 +24,7 @@ foreach($app in $apps) {
     if (!$f -or $f.LastWriteTime.DateTime -lt $app.modifiedDate.ToDateTime ) {
         Write-Verbose "Dumping $($app.name)"
         Export-QlikApp -id $app.id 
-        Write-S3Object  `
-            -Region $region `
-            -BucketName "storage.qlik" `
-            -File "$($app.id).qvf" `
-            -AccessKey $credentials.'Access key ID' ` 
-            -SecretKey $credentials.'Secret access key' `
+        Write-S3Object -Region $region -BucketName "storage.qlik" -File "$($app.id).qvf" -AccessKey $credentials.'Access key ID' -SecretKey $credentials.'Secret access key' 
     }
     $status = "OK"
   }
