@@ -3,47 +3,52 @@ $bucketName = "storage.qlik"
 $workingarea = "C:\QlikBackup\S3WorkingArea" 
 $awsfile = "$([Environment]::GetFolderPath("MyDocuments"))\WindowsPowerShell\accessKeys.csv"
 
+Function LogWrite
+{
+   Param ([string]$logstring)
+   $Stamp = (Get-Date).toString("yyyy/MM/dd HH:mm:ss")
+   Add-content "Log.txt" -value "$Stamp $logstring"
+   write-host "$Stamp $logstring"
+}
+LogWrite "---- Start of Processing"
 try {
     Push-Location $workingarea
     Connect-Qlik
-    if (Get-ChildItem "$($awsfile)" ) {
+    if (Get-ChildItem "$($awsfile)") {
         $credentials = Import-Csv -Path "$($awsfile)"
     }
     else {
-        Write-Error "Not able to find AWS credentials"
+        LogWrite "Not able to find AWS credentials" 
         Exit
     }
 }
 catch {
-    Write-Error "Could not stablish connections"
+    LogWrite "Could not stablish connections" 
     Exit 
 }
-
-$apps = Get-QlikApp -filter "Published eq true and tags.name eq 'S3'" -full
-
-foreach ($app in $apps) {
+LogWrite "Retrieving apps with tag = S3"
+foreach ($app in Get-QlikApp -filter "Published eq true and tags.name eq 'S3'" -full) {
     try {
-        Write-Verbose "Checking if $($app.name) is newer" 
+        LogWrite "Checking if $($app.name) is newer" 
         $s3 = Get-S3Object `
-            -Region $region `
-            -BucketName $bucketName `
-            -Key "$($app.id).qvf" `
-            -AccessKey $credentials.'Access key ID' `
-            -SecretKey $credentials.'Secret access key'
+                -Region $region `
+                -BucketName $bucketName `
+                -Key "$($app.id).qvf" `
+                -AccessKey $credentials.'Access key ID' `
+                -SecretKey $credentials.'Secret access key'
 
         if (!$s3 -or ( $s3.LastModified.ToString("yyyy/MM/dd hh:mm") -lt $app.modifiedDate ) ) {
-            Write-Verbose "Dumping $($app.name)"
+            LogWrite "Dumping $($app.name)"
             Export-QlikApp -id $app.id            
-            Write-Verbose "Tagging to enable management" 
-
+            LogWrite "Tagging to enable management" 
             $tags = @(`
-                @{key = "name"; value = $( $app.name -replace '[()]', '')}, `
+                @{key = "name"; value = $( $app.name -replace '[()]','')}, `
                 @{key = "modifiedDate"; value = $app.modifiedDate}, `
                 @{key = "stream"; value = $app.stream.name}, `
-                @{key = "userDirectory"; value = $(if ($a.owner.userDirectory.GetType() -eq "string") {$a.owner.userDirectory } else {$a.owner.userDirectory[0].Trim()} )}, ` 
-                @{key = "userId"; value = $(if ($a.owner.userId.GetType() -eq "string") {$a.owner.userId } else {$a.owner.userId[0].Trim()})})
-            $tags
-            Write-Verbose "Uploadind as $($app.id).qvf"    
+                @{key = "userDirectory"; value = $(if($app.owner.userDirectory -is "string"){$app.owner.userDirectory} else {$app.owner.userDirectory[0].Trim()})}, ` 
+                @{key = "userId"; value = $(if($app.owner.userId -is "string"){$app.owner.userId} else {$app.owner.userId[0].Trim()})}`
+                )
+            LogWrite "Uploadind as $($app.id).qvf"    
             Write-S3Object `
                 -Region $region `
                 -BucketName $bucketName `
@@ -51,12 +56,14 @@ foreach ($app in $apps) {
                 -AccessKey $credentials.'Access key ID' `
                 -SecretKey $credentials.'Secret access key' `
                 -TagSet $tags
-        }
+         }
     }
     catch {
-        Write-Error $_.Exception.Message
-        Write-Error $app.name
+        LogWrite $_.Exception.Message
+        LogWrite $app.name 
     }
 }
-#Remove-Item *
+LogWrite "Removing temp files"
+Remove-Item *.qvf
 Pop-Location
+LogWrite "---- End of Processing"
