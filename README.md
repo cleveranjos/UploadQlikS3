@@ -20,7 +20,8 @@ You **must** install
 6. Change the $region parameter to your Availability Zone
 7. Change $bucketName to your bucket you´ve created into step 3
 8. Change $workingarea to a working folder of your choice
-9. Run it :)
+9. Tag your published apps that you want to be uploaded with "S3"
+10. Run it :)
 
 ## Useful reading
 * https://4sysops.com/archives/manage-amazon-aws-s3-with-powershell/
